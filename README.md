@@ -6,7 +6,7 @@ Colour maps used in scientific litterature must reflect the underlying data. The
 
 ![alt text](https://github.com/CPernet/brain_colours/blob/master/examples.jpg)
 
-## Data ad Code
+## Data and Code
 
 This repository contains the Malab code used to generate colour maps as well as the maps as .csv, .mat and .lut files
 Brain colours data are made available under the [Open Data Commons Attribution License](http://opendatacommons.org/licenses/by/1.0).
