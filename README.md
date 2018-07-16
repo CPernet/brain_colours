@@ -1,15 +1,15 @@
-# Brain_colours
+# Brain colours
 
-## background
+## Background
 
-Colour maps used in scientific litterature must reflect the underlying data. The problem with many maps is that while underlying values are represented by different colours (as red-green-blue values) they are not perceived as such. This is explained by the fact that human do not perceive colours in a uniform fashion, and that most colour maps have colour and luminance confounded. One solution is the make map in CIELAB (Luminance A:red-green B:bleu-yellow) space.
+Colour maps used in scientific litterature must reflect the underlying data. The problem with many maps is that while underlying values are represented by different colours (as red-green-blue values) they are not perceived as such. This is explained by the fact that human do not perceive colours in a uniform fashion, and that most colour maps have colour and luminance confounded. One solution is the make map in CIELAB (Luminance A:red-green B:bleu-yellow) space. I share here usual maps but with luminance fixed (linearized as much as possible).
 
-## data ad code
+## Data ad Code
 
 This repository contains the Malab code used to generate colour maps as well as the maps as .csv, .mat and .lut files
 Brain colours data are made available under the [Open Data Commons Attribution License](http://opendatacommons.org/licenses/by/1.0).
 
-## dependencies
+## Dependencies
 
  Initial colour maps are taken from [MRICro](https://www.nitrc.org/projects/mricron)
 .lut fules are read using Matthew Brett's pr_getcmap.m function (slover in [SPM](https://www.fil.ion.ucl.ac.uk/spm/))
