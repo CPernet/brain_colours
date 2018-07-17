@@ -24,17 +24,19 @@ cd(current);
 mkdir('new_braincolour_maps')
 
 for map = 1:size(files,1)
-    lutmap = pr_getcmap([files(map).folder filesep files(map).name]);
+    lutmap = loadLutSub([files(map).folder filesep files(map).name]);
     try
         lutmap2 = equalisecolourmap('RGB', lutmap, 'CIE76', [1 0 0], 1/25*length(lutmap), 0,0);
         csvwrite(['new_braincolour_maps' filesep files(map).name(1:end-4) '.csv'],lutmap2)
         save(['new_braincolour_maps' filesep files(map).name(1:end-4)],'lutmap2')
-        map2ermapperlutfile(lutmap2, ['new_braincolour_maps' filesep files(map).name(1:end-4)], files(map).name(1:end-4))
+        saveLutSub('new_braincolour_maps', [], files(map).name(1:end-4), lutmap2)
+        saveCMapSub('new_braincolour_maps', [], files(map).name(1:end-4), lutmap2)
 
         lutmap2 = equalisecolourmap('RGB', lutmap, 'CIE76', [1 1 1], 1/25*length(lutmap), 0,0);
         csvwrite(['new_braincolour_maps' filesep files(map).name(1:end-4) '_iso.csv'],lutmap2)
         save(['new_braincolour_maps' filesep files(map).name(1:end-4) '_iso'],'lutmap2')
-        map2ermapperlutfile(lutmap2, ['new_braincolour_maps' filesep files(map).name(1:end-4) '_iso'], files(map).name(1:end-4),'isoluminant')
+        saveLutSub('new_braincolour_maps', [], [files(map).name(1:end-4) '_iso'], lutmap2)
+        saveCMapSub('new_braincolour_maps', [], [files(map).name(1:end-4) '_iso'], lutmap2)
     end
 end
 
@@ -42,25 +44,27 @@ end
 [dmap, name, desc] = cmap('D1');
 csvwrite(['new_braincolour_maps' filesep 'diverging_bwr.csv'],dmap)
 save(['new_braincolour_maps' filesep 'diverging_bwr'],'dmap')
-map2ermapperlutfile(dmap, ['new_braincolour_maps' filesep 'diverging_bwr'], 'diverging_bwr', desc)
+saveLutSub('new_braincolour_maps', [],'diverging_bwr', dmap)
+saveCMapSub('new_braincolour_maps', [], 'diverging_bwr', dmap)
 
+        
 [dmap, name, desc] = cmap('D7');
 csvwrite(['new_braincolour_maps' filesep 'diverging_bgy.csv'],dmap)
 save(['new_braincolour_maps' filesep 'diverging_bgy'],'dmap')
-map2ermapperlutfile(dmap, ['new_braincolour_maps' filesep 'diverging_bgy'], 'diverging_bgy', desc)
+saveLutSub('new_braincolour_maps', [],'diverging_bgy', dmap)
+saveCMapSub('new_braincolour_maps', [], 'diverging_bgy', dmap)
 
 %% make a figure to illustrate
 figure; index =1;
 for map = [1  10 12 13]
-    cd D:\MRI\SPM12\@slover\private
-    lutmap = pr_getcmap([files(map).folder filesep files(map).name]);
+    lutmap = loadLutSub([files(map).folder filesep files(map).name]);
     cd(current)
     lutmap2 = equalisecolourmap('RGB', lutmap, 'CIE76', [1 0 0], 1/25*length(lutmap), 0,0);
     subplot(2,4,index)
     LS=colorspace('RGB->Lab',lutmap);
     h=colormapline(1:1:length(LS),LS(:,1),[],lutmap);
     set(h,'linewidth',2); grid on; box on; axis square;
-    ylabel('Luninance')
+    ylabel('Luminance')
     title ([files(map).name(1:end-4)],'Color','k','FontSize',12);
     subplot(2,4,index+4);
     LS=colorspace('RGB->Lab',lutmap2);
