@@ -8,12 +8,10 @@ Colour maps used in scientific litterature must reflect the underlying data. The
 
 ## Data and Code
 
-This repository contains the Malab code used to generate colour maps as well as the maps as .csv, .mat and .lut files
-Brain colours data are made available under the [Open Data Commons Attribution License](http://opendatacommons.org/licenses/by/1.0).
+This repository contains the Malab code used to generate colour maps as well as the maps as .csv, .mat (Matlab/SPM), .cmap (FSLeyes) and .lut (MRIcron, ImageJ) files. Brain colours data are made available under the [Open Data Commons Attribution License](http://opendatacommons.org/licenses/by/1.0).
 
 ## Dependencies
 
-- Initial colour maps are taken from [MRICro](https://www.nitrc.org/projects/mricron)
-- .lut fules are read using Matthew Brett's pr_getcmap.m function (slover in [SPM](https://www.fil.ion.ucl.ac.uk/spm/))
+- Initial colour maps are taken from [MRIcron](https://www.nitrc.org/projects/mricron)
 - The luminance is fixed using [equalisecolourmap.m](https://www.peterkovesi.com/matlabfns/index.html#colour) and related files provided by Peter Kovesi. Note this also depends on [deltaE2000.m](http://www2.ece.rochester.edu/~gsharma/ciede2000/).
 - The vizualization is done using are RGB to LAB space converion using the colorspace.m and colormapline.m functions from [Matteo Niccoli](https://mycarta.wordpress.com/2012/05/12/the-rainbow-is-dead-long-live-the-rainbow-part-1/)
