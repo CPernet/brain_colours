@@ -566,12 +566,12 @@ def map_luminance(path_to_maps: Union[str, Path],
     Parameters
     ----------
     path_to_maps : str or Path
-        Path to directory containing colormap files (.mat, .lut, .cmap, .txt, .csv)
+        Path to directory containing colormap files (.mat, .lut, .clut, .cmap, .txt, .csv)
     output_dir : str or Path, optional
         Output directory. Defaults to 'new_braincolour_maps' in current directory
     save_as : str, optional
-        Format to save: 'mat', 'lut', 'cmap', 'txt', 'csv'
-        If None, saves in all formats (default: None)
+        Format to save: 'mat', 'lut', 'clut', 'cmap', 'txt', 'csv'
+        If None, saves with same extension as input files (default: None)
         
     Notes
     -----
@@ -589,11 +589,11 @@ def map_luminance(path_to_maps: Union[str, Path],
     
     # Find all supported colormap files
     colormap_files = []
-    for ext in ['*.lut', '*.cmap', '*.mat', '*.txt', '*.csv']:
+    for ext in ['*.lut', '*.clut', '*.cmap', '*.mat', '*.txt', '*.csv']:
         colormap_files.extend(list(path_to_maps.glob(ext)))
     
     if not colormap_files:
-        print(f"No colormap files (.lut, .cmap, .mat, .txt, .csv) found in {path_to_maps}")
+        print(f"No colormap files (.lut, .clut, .cmap, .mat, .txt, .csv) found in {path_to_maps}")
         return
     
     print(f"Processing {len(colormap_files)} colour maps...")
@@ -637,16 +637,22 @@ def map_luminance(path_to_maps: Union[str, Path],
                 
                 # Save in specified format(s)
                 if save_as is None:
-                    # Save in all formats (default behavior)
-                    np.savetxt(output_dir / f'{base_name}.csv', lut_map2, delimiter=',')
-                    np.save(output_dir / f'{base_name}.npy', lut_map2)
-                    save_lut(output_dir, '', base_name, lut_map2)
-                    save_cmap(output_dir, '', base_name, lut_map2)
-                    try:
-                        import scipy.io
-                        scipy.io.savemat(output_dir / f'{base_name}.mat', {'map': lut_map2})
-                    except ImportError:
-                        pass
+                    # Save with same extension as input file
+                    if ext == '.mat':
+                        try:
+                            import scipy.io
+                            scipy.io.savemat(output_dir / f'{base_name}.mat', {'map': lut_map2})
+                        except ImportError:
+                            print(f"  ⚠ scipy required for .mat format, skipping {base_name}")
+                            continue
+                    elif ext == '.lut':
+                        save_lut(output_dir, '', base_name, lut_map2)
+                    elif ext == '.clut':
+                        save_lut(output_dir, '', f'{base_name}.clut', lut_map2)
+                    elif ext == '.cmap':
+                        save_cmap(output_dir, '', base_name, lut_map2)
+                    elif ext in ['.txt', '.csv']:
+                        np.savetxt(output_dir / f'{base_name}.csv', lut_map2, delimiter=',')
                 else:
                     # Save in specified format only
                     save_fmt = save_as.lower().lstrip('.')
@@ -658,12 +664,14 @@ def map_luminance(path_to_maps: Union[str, Path],
                             raise ImportError("scipy is required for .mat format")
                     elif save_fmt == 'lut':
                         save_lut(output_dir, '', base_name, lut_map2)
+                    elif save_fmt == 'clut':
+                        save_lut(output_dir, '', f'{base_name}.clut', lut_map2)
                     elif save_fmt == 'cmap':
                         save_cmap(output_dir, '', base_name, lut_map2)
                     elif save_fmt in ['txt', 'csv']:
                         np.savetxt(output_dir / f'{base_name}.csv', lut_map2, delimiter=',')
                     else:
-                        raise ValueError(f"Unsupported format: {save_as}. Use 'mat', 'lut', 'cmap', 'txt', or 'csv'")
+                        raise ValueError(f"Unsupported format: {save_as}. Use 'mat', 'lut', 'clut', 'cmap', 'txt', or 'csv'")
                 
                 print(f"  ✓ {base_name}")
             except Exception as e:
@@ -687,12 +695,12 @@ def map_isoluminance(path_to_maps: Union[str, Path],
     Parameters
     ----------
     path_to_maps : str or Path
-        Path to directory containing colormap files (.mat, .lut, .cmap, .txt, .csv)
+        Path to directory containing colormap files (.mat, .lut, .clut, .cmap, .txt, .csv)
     output_dir : str or Path, optional
         Output directory. Defaults to 'isoluminant_maps' in current directory
     save_as : str, optional
-        Format to save: 'mat', 'lut', 'cmap', 'txt', 'csv'
-        If None, saves in all formats (default: None)
+        Format to save: 'mat', 'lut', 'clut', 'cmap', 'txt', 'csv'
+        If None, saves with same extension as input files (default: None)
     """
     path_to_maps = Path(path_to_maps)
     
@@ -705,11 +713,11 @@ def map_isoluminance(path_to_maps: Union[str, Path],
     
     # Find all supported colormap files
     colormap_files = []
-    for ext in ['*.lut', '*.cmap', '*.mat', '*.txt', '*.csv']:
+    for ext in ['*.lut', '*.clut', '*.cmap', '*.mat', '*.txt', '*.csv']:
         colormap_files.extend(list(path_to_maps.glob(ext)))
     
     if not colormap_files:
-        print(f"No colormap files (.lut, .cmap, .mat, .txt, .csv) found in {path_to_maps}")
+        print(f"No colormap files (.lut, .clut, .cmap, .mat, .txt, .csv) found in {path_to_maps}")
         return
     
     print(f"Processing {len(colormap_files)} colour maps for isoluminance...")
@@ -753,16 +761,22 @@ def map_isoluminance(path_to_maps: Union[str, Path],
                 
                 # Save in specified format(s)
                 if save_as is None:
-                    # Save in all formats (default behavior)
-                    np.savetxt(output_dir / f'{base_name}_iso.csv', lut_map2_iso, delimiter=',')
-                    np.save(output_dir / f'{base_name}_iso.npy', lut_map2_iso)
-                    save_lut(output_dir, '', f'{base_name}_iso', lut_map2_iso)
-                    save_cmap(output_dir, '', f'{base_name}_iso', lut_map2_iso)
-                    try:
-                        import scipy.io
-                        scipy.io.savemat(output_dir / f'{base_name}_iso.mat', {'map': lut_map2_iso})
-                    except ImportError:
-                        pass
+                    # Save with same extension as input file
+                    if ext == '.mat':
+                        try:
+                            import scipy.io
+                            scipy.io.savemat(output_dir / f'{base_name}_iso.mat', {'map': lut_map2_iso})
+                        except ImportError:
+                            print(f"  ⚠ scipy required for .mat format, skipping {base_name}")
+                            continue
+                    elif ext == '.lut':
+                        save_lut(output_dir, '', f'{base_name}_iso', lut_map2_iso)
+                    elif ext == '.clut':
+                        save_lut(output_dir, '', f'{base_name}_iso.clut', lut_map2_iso)
+                    elif ext == '.cmap':
+                        save_cmap(output_dir, '', f'{base_name}_iso', lut_map2_iso)
+                    elif ext in ['.txt', '.csv']:
+                        np.savetxt(output_dir / f'{base_name}_iso.csv', lut_map2_iso, delimiter=',')
                 else:
                     # Save in specified format only
                     save_fmt = save_as.lower().lstrip('.')
@@ -774,12 +788,14 @@ def map_isoluminance(path_to_maps: Union[str, Path],
                             raise ImportError("scipy is required for .mat format")
                     elif save_fmt == 'lut':
                         save_lut(output_dir, '', f'{base_name}_iso', lut_map2_iso)
+                    elif save_fmt == 'clut':
+                        save_lut(output_dir, '', f'{base_name}_iso.clut', lut_map2_iso)
                     elif save_fmt == 'cmap':
                         save_cmap(output_dir, '', f'{base_name}_iso', lut_map2_iso)
                     elif save_fmt in ['txt', 'csv']:
                         np.savetxt(output_dir / f'{base_name}_iso.csv', lut_map2_iso, delimiter=',')
                     else:
-                        raise ValueError(f"Unsupported format: {save_as}. Use 'mat', 'lut', 'cmap', 'txt', or 'csv'")
+                        raise ValueError(f"Unsupported format: {save_as}. Use 'mat', 'lut', 'clut', 'cmap', 'txt', or 'csv'")
                 
                 print(f"  ✓ {base_name}_iso")
             except Exception as e:
@@ -1196,12 +1212,12 @@ def lab_to_rgb(lab: np.ndarray) -> np.ndarray:
 
 def load_lut(filename: Union[str, Path]) -> np.ndarray:
     """
-    Load color lookup table in ImageJ/MRIcron .lut or FSLeyes .cmap format.
+    Load color lookup table in ImageJ/MRIcron .lut, FSLeyes .cmap, or MRIcroGL .clut format.
     
     Parameters
     ----------
     filename : str or Path
-        Path to .lut or .cmap file
+        Path to .lut, .cmap, or .clut file
         
     Returns
     -------
@@ -1214,6 +1230,45 @@ def load_lut(filename: Union[str, Path]) -> np.ndarray:
         raise FileNotFoundError(f"Unable to find {filename}")
     
     file_size = filename.stat().st_size
+    ext = filename.suffix.lower()
+    
+    # MRIcroGL .clut format (text-based with control points)
+    if ext == '.clut':
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        
+        # Parse .clut file
+        num_nodes = 0
+        intensities = []
+        rgba_values = []
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('numnodes='):
+                num_nodes = int(line.split('=')[1])
+            elif line.startswith('nodeintensity'):
+                intensities.append(int(line.split('=')[1]))
+            elif line.startswith('nodergba'):
+                # Format: nodergba0=R|G|B|A
+                rgba_str = line.split('=')[1]
+                rgba = [int(x) for x in rgba_str.split('|')]
+                rgba_values.append(rgba[:3])  # Take only RGB, ignore alpha
+        
+        if len(intensities) != len(rgba_values) or len(intensities) == 0:
+            raise ValueError(f"Invalid .clut file format: {filename}")
+        
+        # Convert control points to 256-entry colormap via interpolation
+        intensities = np.array(intensities) / 255.0  # Normalize to [0, 1]
+        rgba_values = np.array(rgba_values) / 255.0  # Normalize to [0, 1]
+        
+        # Interpolate to 256 entries
+        new_indices = np.linspace(0, 1, 256)
+        R = np.interp(new_indices, intensities, rgba_values[:, 0])
+        G = np.interp(new_indices, intensities, rgba_values[:, 1])
+        B = np.interp(new_indices, intensities, rgba_values[:, 2])
+        lut = np.column_stack([R, G, B])
+        
+        return lut
     
     # ImageJ/MRIcron format: 768 bytes
     if file_size == 768:
@@ -1255,7 +1310,7 @@ def load_lut(filename: Union[str, Path]) -> np.ndarray:
 def save_lut(path: Union[str, Path], prefix: str, name: str, 
              lut: np.ndarray) -> None:
     """
-    Save colormap in ImageJ/MRIcron .lut format.
+    Save colormap in ImageJ/MRIcron .lut format or MRIcroGL .clut format.
     
     Parameters
     ----------
@@ -1264,22 +1319,56 @@ def save_lut(path: Union[str, Path], prefix: str, name: str,
     prefix : str
         Prefix for filename
     name : str
-        Base name for the file
+        Base name for the file (extension determines format)
     lut : np.ndarray
         RGB colormap with values in range [0, 1]. Shape: (N, 3)
     """
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     
-    # Get base name without extension
-    name = Path(name).stem
-    
-    filename = path / f"{prefix}{name}.lut"
-    
-    # Convert to 0-255 range and save as bytes
-    lut_bytes = (lut * 255).astype(np.uint8)
-    with open(filename, 'wb') as f:
-        lut_bytes.tofile(f)
+    # Check if name has .clut extension
+    name_path = Path(name)
+    if name_path.suffix.lower() == '.clut':
+        # Save as MRIcroGL .clut format
+        base_name = name_path.stem
+        filename = path / f"{prefix}{base_name}.clut"
+        
+        # Create control points (use fewer points for .clut format)
+        # Sample at regular intervals
+        n_nodes = min(8, len(lut))  # Use up to 8 control points
+        indices = np.linspace(0, len(lut) - 1, n_nodes).astype(int)
+        
+        with open(filename, 'w') as f:
+            f.write('[FLT]\n')
+            f.write('min=0\n')
+            f.write('max=0\n')
+            f.write('[INT]\n')
+            f.write(f'numnodes={n_nodes}\n')
+            f.write('[BYT]\n')
+            
+            # Write node intensities (0-255)
+            for i, idx in enumerate(indices):
+                intensity = int(idx * 255 / (len(lut) - 1))
+                f.write(f'nodeintensity{i}={intensity}\n')
+            
+            f.write('[RGBA255]\n')
+            
+            # Write RGBA values (RGB from lut, A as semi-transparent gradient)
+            for i, idx in enumerate(indices):
+                r = int(lut[idx, 0] * 255)
+                g = int(lut[idx, 1] * 255)
+                b = int(lut[idx, 2] * 255)
+                a = int((i / (n_nodes - 1)) * 128) if n_nodes > 1 else 128
+                f.write(f'nodergba{i}={r}|{g}|{b}|{a}\n')
+    else:
+        # Save as ImageJ/MRIcron .lut format (binary)
+        base_name = name_path.stem
+        filename = path / f"{prefix}{base_name}.lut"
+        
+        # Convert to 0-255 range and save as bytes
+        lut_bytes = (lut * 255).astype(np.uint8)
+        with open(filename, 'wb') as f:
+            lut_bytes.tofile(f)
 
 
 def save_cmap(path: Union[str, Path], prefix: str, name: str, 

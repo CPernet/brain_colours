@@ -70,9 +70,9 @@ Generate perceptually uniform colour maps for brain imaging.
 Fix luminance issues in existing colour maps using lightness-only correction.
 
 **Parameters:**
-- `path_to_maps` (str or Path): Directory containing colormap files (`.mat`, `.lut`, `.cmap`, `.txt`, `.csv`)
+- `path_to_maps` (str or Path): Directory containing colormap files (`.mat`, `.lut`, `.clut`, `.cmap`, `.txt`, `.csv`)
 - `output_dir` (str or Path, optional): Output directory. Default: `'new_braincolour_maps'`
-- `save_as` (str, optional): Format to save: `'mat'`, `'lut'`, `'cmap'`, `'txt'`, `'csv'`. If None, saves in all formats
+- `save_as` (str, optional): Format to save: `'mat'`, `'lut'`, `'clut'`, `'cmap'`, `'txt'`, `'csv'`. If None, saves with same extension as input files
 
 **Notes:**
 - Uses W=[1, 0, 0] for lightness-only correction
@@ -83,9 +83,9 @@ Fix luminance issues in existing colour maps using lightness-only correction.
 Create isoluminant versions of colour maps with full perceptual correction.
 
 **Parameters:**
-- `path_to_maps` (str or Path): Directory containing colormap files (`.mat`, `.lut`, `.cmap`, `.txt`, `.csv`)
+- `path_to_maps` (str or Path): Directory containing colormap files (`.mat`, `.lut`, `.clut`, `.cmap`, `.txt`, `.csv`)
 - `output_dir` (str or Path, optional): Output directory. Default: `'isoluminant_maps'`
-- `save_as` (str, optional): Format to save: `'mat'`, `'lut'`, `'cmap'`, `'txt'`, `'csv'`. If None, saves in all formats
+- `save_as` (str, optional): Format to save: `'mat'`, `'lut'`, `'clut'`, `'cmap'`, `'txt'`, `'csv'`. If None, saves with same extension as input files
 
 **Notes:**
 - Uses W=[1, 1, 1] for full isoluminant correction
@@ -97,10 +97,9 @@ Create isoluminant versions of colour maps with full perceptual correction.
 Supported formats for brain imaging software:
 - `.mat` - MATLAB format (requires scipy)
 - `.lut` - ImageJ/MRIcron binary format (768 bytes)
+- `.clut` - MRIcroGL text format with control points
 - `.cmap` - FSLeyes text format
 - `.txt` / `.csv` - Plain text CSV format
-
-Note: When saving all formats (default), a `.npy` file is also created for Python/NumPy compatibility.
 
 ## Background
 
