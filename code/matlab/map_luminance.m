@@ -1,3 +1,5 @@
+function map_luminance(path2maps)
+
 % This is the matlab script used to 'fix' the luminance issue in colour
 % maps used in human brain tomographic imaging
 %
@@ -16,8 +18,8 @@
 current = pwd;
 %% scan for colour map taken from mricro ()
 
-cd('D:\MRI\mricron\lut')
-files = dir('*.lut');
+
+files = dir(fullfile(path2maps,'*.lut'));
 
 %% now read, correct luminance, and save
 cd(current);
