@@ -72,16 +72,24 @@ def plot_colormap_comparison(before_files: List[Union[str, Path]],
         
         x = np.arange(len(L_before))
         
-        # Compute expected linear fit from min to max luminance
+        # Detect if colormap is inverted (goes from high to low luminance)
+        # Check the original colormap trend
+        is_inverted = L_before[0] > L_before[-1]
+        
+        # Compute expected linear fit based on detected direction
         L_min = min(L_before.min(), L_after.min())
         L_max = max(L_before.max(), L_after.max())
-        L_expected = np.linspace(L_min, L_max, len(L_before))
+        
+        if is_inverted:
+            # Expected: high to low (inverted)
+            L_expected = np.linspace(L_max, L_min, len(L_before))
+        else:
+            # Expected: low to high (normal)
+            L_expected = np.linspace(L_min, L_max, len(L_before))
         
         # Compute Mean Squared Error vs expected linear
         mse_before = np.mean((L_before - L_expected) ** 2)
         mse_after = np.mean((L_after - L_expected) ** 2)
-        
-        x = np.arange(len(L_before))
         
         # Plot BEFORE (left column)
         ax_before = axes[idx, 0]
@@ -121,7 +129,7 @@ def plot_colormap_comparison(before_files: List[Union[str, Path]],
 
 def plot_colormap_line(ax, x, y, colormap):
     """
-"""Plot a line with colors from the colormap (similar to MATLAB colormapline).
+    Plot a line with colors from the colormap (similar to MATLAB colormapline).
     
     Python implementation of colormapline.m by Matthias Hunstig
     (University of Paderborn, Germany, 2013-2016).
@@ -244,13 +252,13 @@ if __name__ == '__main__':
             found_before = None
             found_after = None
             
-            for ext in ['.clut', '.lut', '.cmap', '.csv']:
+            for ext in ['.json', '.clut', '.lut', '.cmap', '.mat', '.csv']:
                 before_path = before_dir / f'{name}{ext}'
                 if before_path.exists():
                     found_before = before_path
                     break
             
-            for ext in ['.clut', '.lut', '.cmap', '.csv']:
+            for ext in ['.json', '.clut', '.lut', '.cmap', '.mat', '.csv']:
                 after_path = after_dir / f'{name}{ext}'
                 if after_path.exists():
                     found_after = after_path
@@ -263,9 +271,11 @@ if __name__ == '__main__':
                 print(f"⚠ Could not find both before/after for: {name}")
     else:
         # Use all colormaps in before directory
-        before_files = sorted(list(before_dir.glob('*.clut')) + 
+        before_files = sorted(list(before_dir.glob('*.json')) +
+                             list(before_dir.glob('*.clut')) + 
                              list(before_dir.glob('*.lut')) +
-                             list(before_dir.glob('*.cmap')))
+                             list(before_dir.glob('*.cmap')) +
+                             list(before_dir.glob('*.mat')))
         
         after_files = []
         for bf in before_files:

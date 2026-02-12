@@ -249,6 +249,7 @@ def make_newmap(label: str, save_as: Optional[str] = None) -> Tuple[np.ndarray, 
         File path to save the colormap. File extension determines format:
         - '.mat': MATLAB format
         - '.lut': ImageJ/MRIcron format (binary)
+        - '.clut': ImageJ/MRIcron format (binary)
         - '.cmap': FSLeyes format (text)
         - '.txt' or '.csv': Plain text CSV format
         If provided, the colormap will be saved to disk.
@@ -589,11 +590,11 @@ def map_luminance(path_to_maps: Union[str, Path],
     
     # Find all supported colormap files
     colormap_files = []
-    for ext in ['*.lut', '*.clut', '*.cmap', '*.mat', '*.txt', '*.csv']:
+    for ext in ['*.lut', '*.clut', '*.cmap', '*.json', '*.mat', '*.txt', '*.csv']:
         colormap_files.extend(list(path_to_maps.glob(ext)))
     
     if not colormap_files:
-        print(f"No colormap files (.lut, .clut, .cmap, .mat, .txt, .csv) found in {path_to_maps}")
+        print(f"No colormap files (.lut, .clut, .cmap, .json, .mat, .txt, .csv) found in {path_to_maps}")
         return
     
     print(f"Processing {len(colormap_files)} colour maps...")
@@ -649,6 +650,8 @@ def map_luminance(path_to_maps: Union[str, Path],
                         save_lut(output_dir, '', base_name, lut_map2)
                     elif ext == '.clut':
                         save_lut(output_dir, '', f'{base_name}.clut', lut_map2)
+                    elif ext == '.json':
+                        save_lut(output_dir, '', f'{base_name}.json', lut_map2)
                     elif ext == '.cmap':
                         save_cmap(output_dir, '', base_name, lut_map2)
                     elif ext in ['.txt', '.csv']:
@@ -666,12 +669,14 @@ def map_luminance(path_to_maps: Union[str, Path],
                         save_lut(output_dir, '', base_name, lut_map2)
                     elif save_fmt == 'clut':
                         save_lut(output_dir, '', f'{base_name}.clut', lut_map2)
+                    elif save_fmt == 'json':
+                        save_lut(output_dir, '', f'{base_name}.json', lut_map2)
                     elif save_fmt == 'cmap':
                         save_cmap(output_dir, '', base_name, lut_map2)
                     elif save_fmt in ['txt', 'csv']:
                         np.savetxt(output_dir / f'{base_name}.csv', lut_map2, delimiter=',')
                     else:
-                        raise ValueError(f"Unsupported format: {save_as}. Use 'mat', 'lut', 'clut', 'cmap', 'txt', or 'csv'")
+                        raise ValueError(f"Unsupported format: {save_as}. Use 'mat', 'lut', 'clut', 'json', 'cmap', 'txt', or 'csv'")
                 
                 print(f"  ✓ {base_name}")
             except Exception as e:
@@ -1220,12 +1225,12 @@ def lab_to_rgb(lab: np.ndarray) -> np.ndarray:
 
 def load_lut(filename: Union[str, Path]) -> np.ndarray:
     """
-    Load color lookup table in ImageJ/MRIcron .lut, FSLeyes .cmap, or MRIcroGL .clut format.
+    Load color lookup table in ImageJ/MRIcron .lut, FSLeyes .cmap, MRIcroGL .clut, or niivue .json format.
     
     Parameters
     ----------
     filename : str or Path
-        Path to .lut, .cmap, or .clut file
+        Path to .lut, .cmap, .clut, or .json file
         
     Returns
     -------
@@ -1239,6 +1244,40 @@ def load_lut(filename: Union[str, Path]) -> np.ndarray:
     
     file_size = filename.stat().st_size
     ext = filename.suffix.lower()
+    
+    # Niivue .json format (control points with RGB, A, I values)
+    if ext == '.json':
+        import json
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        
+        # Niivue format: {"R": [...], "G": [...], "B": [...], "A": [...], "I": [...]}
+        # I = intensity positions (0-255), RGB values (0-255)
+        if 'R' not in data or 'G' not in data or 'B' not in data:
+            raise ValueError(f"Invalid niivue JSON format: {filename}")
+        
+        R = np.array(data['R'])
+        G = np.array(data['G'])
+        B = np.array(data['B'])
+        I = np.array(data.get('I', np.linspace(0, 255, len(R))))  # Default to linear if I not present
+        
+        # Normalize to [0, 1]
+        R = R / 255.0
+        G = G / 255.0
+        B = B / 255.0
+        I = I / 255.0
+        
+        # Interpolate to 256 entries
+        new_indices = np.linspace(0, 1, 256)
+        R_interp = np.interp(new_indices, I, R)
+        G_interp = np.interp(new_indices, I, G)
+        B_interp = np.interp(new_indices, I, B)
+        lut = np.column_stack([R_interp, G_interp, B_interp])
+        
+        # Clip to valid range [0, 1] to handle floating point precision issues
+        lut = np.clip(lut, 0, 1)
+        
+        return lut
     
     # MRIcroGL .clut format (text-based with control points)
     if ext == '.clut':
@@ -1276,15 +1315,62 @@ def load_lut(filename: Union[str, Path]) -> np.ndarray:
         B = np.interp(new_indices, intensities, rgba_values[:, 2])
         lut = np.column_stack([R, G, B])
         
+        # Clip to valid range [0, 1] to handle floating point precision issues
+        lut = np.clip(lut, 0, 1)
+        
         return lut
     
     # ImageJ/MRIcron format: 768 bytes
-    if file_size == 768:
+    if file_size == 768 and ext == '.lut':
         with open(filename, 'rb') as f:
             lut = np.fromfile(f, dtype=np.uint8)
         lut = lut.reshape(256, 3)
         lut = lut / 255.0
         return lut
+    
+    # MATLAB .mat format
+    if ext == '.mat':
+        try:
+            import scipy.io
+            mat_data = scipy.io.loadmat(filename)
+            # Try common variable names
+            if 'colormap' in mat_data:
+                lut = mat_data['colormap']
+            elif 'cmap' in mat_data:
+                lut = mat_data['cmap']
+            elif 'map' in mat_data:
+                lut = mat_data['map']
+            else:
+                # Get first non-metadata variable
+                keys = [k for k in mat_data.keys() if not k.startswith('__')]
+                if keys:
+                    lut = mat_data[keys[0]]
+                else:
+                    raise ValueError(f"No colormap data found in .mat file: {filename}")
+            
+            # Ensure correct shape and range
+            if lut.ndim == 1:
+                lut = lut.reshape(-1, 3)
+            
+            # If values are in 0-255 range, normalize
+            if lut.max() > 1.0:
+                lut = lut / 255.0
+            
+            # Ensure 256 entries via interpolation if needed
+            if lut.shape[0] != 256:
+                old_indices = np.linspace(0, 1, lut.shape[0])
+                new_indices = np.linspace(0, 1, 256)
+                R = np.interp(new_indices, old_indices, lut[:, 0])
+                G = np.interp(new_indices, old_indices, lut[:, 1])
+                B = np.interp(new_indices, old_indices, lut[:, 2])
+                lut = np.column_stack([R, G, B])
+            
+            # Clip to valid range
+            lut = np.clip(lut, 0, 1)
+            return lut
+            
+        except ImportError:
+            raise ImportError("scipy is required to read .mat files")
     
     # FSLeyes .cmap format
     ext = filename.suffix.lower()
@@ -1318,7 +1404,7 @@ def load_lut(filename: Union[str, Path]) -> np.ndarray:
 def save_lut(path: Union[str, Path], prefix: str, name: str, 
              lut: np.ndarray) -> None:
     """
-    Save colormap in ImageJ/MRIcron .lut format or MRIcroGL .clut format.
+    Save colormap in ImageJ/MRIcron .lut, MRIcroGL .clut, or niivue .json format.
     
     Parameters
     ----------
@@ -1334,9 +1420,33 @@ def save_lut(path: Union[str, Path], prefix: str, name: str,
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     
-    # Check if name has .clut extension
+    # Check file extension
     name_path = Path(name)
-    if name_path.suffix.lower() == '.clut':
+    ext = name_path.suffix.lower()
+    base_name = name_path.stem
+    
+    if ext == '.json':
+        # Save as niivue .json format
+        filename = path / f"{prefix}{base_name}.json"
+        
+        # Create control points (use fewer points for JSON format)
+        n_nodes = min(8, len(lut))  # Use up to 8 control points
+        indices = np.linspace(0, len(lut) - 1, n_nodes).astype(int)
+        
+        # Extract RGB values at control points
+        R = [int(lut[idx, 0] * 255) for idx in indices]
+        G = [int(lut[idx, 1] * 255) for idx in indices]
+        B = [int(lut[idx, 2] * 255) for idx in indices]
+        I = [int(idx * 255 / (len(lut) - 1)) for idx in indices]
+        A = [int((i / (n_nodes - 1)) * 128) if n_nodes > 1 else 128 for i in range(n_nodes)]
+        
+        import json
+        data = {"R": R, "G": G, "B": B, "A": A, "I": I}
+        
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2)
+    
+    elif ext == '.clut':
         # Save as MRIcroGL .clut format
         base_name = name_path.stem
         filename = path / f"{prefix}{base_name}.clut"
