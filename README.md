@@ -2,6 +2,16 @@
 
 Perceptually uniform colour maps for brain imaging visualization, based on the paper [Data visualization for inference in tomographic brain imaging](https://onlinelibrary.wiley.com/doi/full/10.1111/ejn.14430) EJN 2019.
 
+## Brain colours maps for usage
+
+24 maps linear or diverging with a linear in luminance + the brewcolor map for categorical data (colorblind friendly).  
+All 25 maps come as `.mat .lut .clut .cmap .json`  
+
+## Other folders
+
+I linearized maps of the faviourite tools, you can simply overwrite the maps by those ones. 
+Note you may not want all maps linearized, this can be checked in the png files looking at pre- post- (under code/software_linearization)
+
 ## Quick Start (Python)
 
 ```python
