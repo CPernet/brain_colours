@@ -1123,6 +1123,10 @@ def rgb_to_lab(rgb: np.ndarray) -> np.ndarray:
     """
     Convert RGB to CIE L*a*b* color space.
     
+    Based on colorspace.m by Pascal Getreuer (2005-2010).
+    Implements sRGB to CIE L*a*b* conversion with D65 illuminant
+    and 2 degree observer.
+    
     Parameters
     ----------
     rgb : np.ndarray
@@ -1163,6 +1167,10 @@ def rgb_to_lab(rgb: np.ndarray) -> np.ndarray:
 def lab_to_rgb(lab: np.ndarray) -> np.ndarray:
     """
     Convert CIE L*a*b* to RGB color space.
+    
+    Based on colorspace.m by Pascal Getreuer (2005-2010).
+    Implements CIE L*a*b* to sRGB conversion with D65 illuminant
+    and 2 degree observer.
     
     Parameters
     ----------
